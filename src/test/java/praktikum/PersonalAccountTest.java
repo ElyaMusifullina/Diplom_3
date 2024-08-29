@@ -3,6 +3,9 @@ package praktikum;
 import static org.junit.Assert.assertTrue;
 
 import io.qameta.allure.junit4.DisplayName;
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,13 +17,27 @@ import praktikum.util.WebDriverFactory;
 
 public class PersonalAccountTest {
   private WebDriver webDriver;
-  private final String email = "test@example.com";
-  private final String password = "password123";
+  private String email;
+  private String password;
+  private String name;
+  private String accessToken;
 
   @Before
   public void setUp() {
-    webDriver = WebDriverFactory.getWebDriver("chrome");
+    webDriver = WebDriverFactory.getWebDriver();
     webDriver.get("https://stellarburgers.nomoreparties.site/");
+    email = RandomStringUtils.randomAlphabetic(6) + "@test.com";
+    password = RandomStringUtils.randomAlphabetic(6);
+    name = RandomStringUtils.randomAlphabetic(6);
+
+    // Регистрация пользователя через API
+    Response response = RestAssured.given()
+      .contentType("application/json")
+      .body(String.format("{\"email\": \"%s\", \"password\": \"%s\", \"name\": \"%s\"}", email, password, name))
+      .when()
+      .post("https://stellarburgers.nomoreparties.site/api/auth/register");
+
+    accessToken = response.then().extract().path("accessToken");
   }
 
   @Test
@@ -78,11 +95,21 @@ public class PersonalAccountTest {
     mainPage.clickPersonalAccountButton();
     personalAccountPage.clickExitButton();
 
-    assertTrue("Выход из аккаунта не выполнен", mainPage.isUserEntered());
+    assertTrue("Выход из аккаунта не выполнен", loginPage.isUserExited());
   }
 
   @After
   public void tearDown() {
+    // Удаление пользователя через API
+    if (accessToken != null) {
+      RestAssured.given()
+        .header("Authorization", accessToken)
+        .when()
+        .delete("https://stellarburgers.nomoreparties.site/api/auth/user")
+        .then()
+        .statusCode(202);
+    }
+
     webDriver.quit();
   }
 }

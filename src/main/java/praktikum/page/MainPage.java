@@ -15,6 +15,8 @@ public class MainPage {
   private final By enterButtonLocator= By.xpath("//button[text() = 'Войти в аккаунт']");
   // Кнопка "Конструктор"
   private final By constructorButtonLocator= By.xpath("//p[text() = 'Конструктор']");
+  // Кнопка "Оформить заказ"
+  private final By createOrderButtonLocator= By.xpath("//button[text() = 'Оформить заказ']");
 
   public MainPage(WebDriver webDriver) {
     this.webDriver = webDriver;
@@ -42,8 +44,9 @@ public class MainPage {
 
   @Step("Проверка, что пользователь вошел в систему")
   public boolean isUserEntered() {
-    new WebDriverWait(webDriver, Duration.ofSeconds(5))
-      .until(ExpectedConditions.visibilityOf(webDriver.findElement(personalAccountButtonLocator)));
-    return webDriver.findElement(personalAccountButtonLocator).isDisplayed();
+    new WebDriverWait(webDriver, Duration.ofSeconds(3))
+      .until(ExpectedConditions.visibilityOfElementLocated(createOrderButtonLocator));
+    return webDriver.findElement(createOrderButtonLocator).isDisplayed();
   }
+
 }

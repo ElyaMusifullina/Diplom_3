@@ -1,17 +1,20 @@
 package praktikum.page;
 
 import io.qameta.allure.Step;
+import java.time.Duration;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class PersonalAccountPage {
   private final WebDriver webDriver;
   // Кнопка "Профиль"
   private final By profileButtonLocator =
-    By.xpath("//a[text() = 'Профиль']");
+    By.xpath("//a[text()='Профиль']");
   // Кнопка "Выход"
   private final By exitButtonLocator =
-    By.xpath("//button[text() = 'Выход']");
+    By.xpath("//li[@class = 'Account_listItem__35dAP']//button[text() = 'Выход']");
   // Кнопка "Конструктор"
   private final By constructorButtonLocator= By.xpath("//p[text() = 'Конструктор']");
   // Логотип Stellar Burgers
@@ -23,7 +26,9 @@ public class PersonalAccountPage {
 
   @Step("Проверка, что страница личного кабинета открыта")
   public boolean isPersonalAccountPageOpened() {
-    return webDriver.findElement(profileButtonLocator).isDisplayed();
+    new WebDriverWait(webDriver, Duration.ofSeconds(3))
+      .until(ExpectedConditions.visibilityOfElementLocated(profileButtonLocator));
+    return webDriver.findElement(profileButtonLocator).isEnabled();
   }
 
   @Step("Нажатие кнопки \"Конструктор\"")
@@ -38,6 +43,8 @@ public class PersonalAccountPage {
 
   @Step("Нажатие кнопки \"Выход\"")
   public void clickExitButton() {
+    new WebDriverWait(webDriver, Duration.ofSeconds(3))
+      .until(ExpectedConditions.visibilityOfElementLocated(exitButtonLocator));
     webDriver.findElement(exitButtonLocator).click();
   }
 }

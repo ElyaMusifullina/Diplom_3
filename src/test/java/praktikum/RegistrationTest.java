@@ -3,72 +3,87 @@ package praktikum;
 import static org.junit.Assert.assertTrue;
 
 import io.qameta.allure.junit4.DisplayName;
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import org.openqa.selenium.WebDriver;
 import praktikum.page.LoginPage;
 import praktikum.page.MainPage;
 import praktikum.page.RegistrationPage;
 import praktikum.util.WebDriverFactory;
 
-@RunWith(Parameterized.class)
 public class RegistrationTest {
   private WebDriver webDriver;
-  private final String browser;
-  private final String name;
-  private final String email;
-  private final String password;
-  private final boolean isValidPassword;
-
-  public RegistrationTest(String browser, String name, String email, String password, boolean isValidPassword) {
-    this.browser = browser;
-    this.name = name;
-    this.email = email;
-    this.password = password;
-    this.isValidPassword = isValidPassword;
-  }
-
-  @Parameterized.Parameters
-  public static Object[][] getData() {
-    return new Object[][] {
-      {"chrome", RandomStringUtils.randomAlphabetic(6),
-        RandomStringUtils.randomAlphabetic(6) + "@test.com", RandomStringUtils.randomAlphabetic(6), true},
-      {"chrome", RandomStringUtils.randomAlphabetic(6),
-        RandomStringUtils.randomAlphabetic(6) + "@test.com", RandomStringUtils.randomAlphabetic(5), false}
-    };
-  }
+  private String name;
+  private String email;
+  private String password;
+  private String accessToken;
 
   @Before
   public void setUp() {
-    webDriver = WebDriverFactory.getWebDriver(browser);
+    webDriver = WebDriverFactory.getWebDriver();
     webDriver.get("https://stellarburgers.nomoreparties.site/");
+    name = RandomStringUtils.randomAlphabetic(6);
+    email = RandomStringUtils.randomAlphabetic(6) + "@test.com";
   }
 
   @Test
-  @DisplayName("Регистрация нового пользователя")
+  @DisplayName("Успешная регистрация нового пользователя")
   public void userRegistration() {
+    password = RandomStringUtils.randomAlphabetic(6);
+
     MainPage mainPage = new MainPage(webDriver);
-    mainPage.clickEnterButton();
-
     LoginPage loginPage = new LoginPage(webDriver);
-    loginPage.clickRegistrationLink();
-
     RegistrationPage registrationPage = new RegistrationPage(webDriver);
+
+    mainPage.clickEnterButton();
+    loginPage.clickRegistrationLink();
+    registrationPage.userRegistration(name, email, password);
+    loginPage.userLogin(email,password);
+
+    assertTrue("Пользователь не смог зарегистрироваться", mainPage.isUserEntered());
+  }
+
+  @Test
+  @DisplayName("Невалидный пароль при регистрации пользователя")
+  public void checkIncorrectPassword() {
+    password = RandomStringUtils.randomAlphabetic(5);
+
+    MainPage mainPage = new MainPage(webDriver);
+    LoginPage loginPage = new LoginPage(webDriver);
+    RegistrationPage registrationPage = new RegistrationPage(webDriver);
+
+    mainPage.clickEnterButton();
+    loginPage.clickRegistrationLink();
     registrationPage.userRegistration(name, email, password);
 
-    if (isValidPassword) {
-      assertTrue("Пользователь не смог зарегистрироваться", mainPage.isUserEntered());
-    } else {
-      assertTrue("Ошибка о некорректном пароле не отображается", registrationPage.isPasswordErrorDisplayed());
-    }
+    assertTrue("Ошибка о некорректном пароле не отображается", registrationPage.isPasswordErrorDisplayed());
   }
 
     @After
     public void tearDown() {
+      //Узнаем accessToken зарегистрированного пользователя для последующего удаления
+      Response response = RestAssured.given()
+        .contentType("application/json")
+        .body(String.format("{\"email\": \"%s\", \"password\": \"%s\"}", email, password))
+        .when()
+        .post("https://stellarburgers.nomoreparties.site/api/auth/login");
+
+      accessToken = response.then().extract().path("accessToken");
+
+      // Удаление пользователя через API
+      if (accessToken != null) {
+        RestAssured.given()
+          .header("Authorization", accessToken)
+          .when()
+          .delete("https://stellarburgers.nomoreparties.site/api/auth/user")
+          .then()
+          .statusCode(202);
+      }
+
       webDriver.quit();
     }
 }

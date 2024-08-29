@@ -3,6 +3,7 @@ package praktikum;
 import static org.junit.Assert.assertTrue;
 
 import io.qameta.allure.junit4.DisplayName;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.WebDriver;
@@ -15,7 +16,7 @@ public class ConstructorTest {
 
   @Before
   public void setUp() {
-    webDriver = WebDriverFactory.getWebDriver("chrome");
+    webDriver = WebDriverFactory.getWebDriver();
     webDriver.get("https://stellarburgers.nomoreparties.site/");
   }
 
@@ -25,8 +26,8 @@ public class ConstructorTest {
     MainPage mainPage = new MainPage(webDriver);
     ConstructorPage constructorPage = new ConstructorPage(webDriver);
 
+    mainPage.clickPersonalAccountButton();
     mainPage.clickConstructorButton();
-    constructorPage.clickBunsTab();
 
     assertTrue("Раздел 'Булки' не активен", constructorPage.isBunsTabActive());
   }
@@ -34,10 +35,8 @@ public class ConstructorTest {
   @Test
   @DisplayName("Переход к разделу 'Соусы'")
   public void transitionToSaucesSection() {
-    MainPage mainPage = new MainPage(webDriver);
     ConstructorPage constructorPage = new ConstructorPage(webDriver);
 
-    mainPage.clickConstructorButton();
     constructorPage.clickSaucesTab();
 
     assertTrue("Раздел 'Соусы' не активен", constructorPage.isSaucesTabActive());
@@ -46,12 +45,15 @@ public class ConstructorTest {
   @Test
   @DisplayName("Переход к разделу 'Начинки'")
   public void transitionToFillingsSection() {
-    MainPage mainPage = new MainPage(webDriver);
     ConstructorPage constructorPage = new ConstructorPage(webDriver);
 
-    mainPage.clickConstructorButton();
     constructorPage.clickFillingsTab();
 
     assertTrue("Раздел 'Начинки' не активен", constructorPage.isFillingsTabActive());
+  }
+
+  @After
+  public void tearDown() {
+    webDriver.quit();
   }
 }

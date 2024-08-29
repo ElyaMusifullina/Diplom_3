@@ -1,8 +1,11 @@
 package praktikum.page;
 
 import io.qameta.allure.Step;
+import java.time.Duration;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class LoginPage {
   private final WebDriver webDriver;
@@ -44,6 +47,8 @@ public class LoginPage {
 
   @Step("Вход в систему пользователя")
   public void userLogin(String email, String password) {
+    new WebDriverWait(webDriver, Duration.ofSeconds(3))
+      .until(ExpectedConditions.visibilityOfElementLocated(loginButtonLocator));
     setEmail(email);
     setPassword(password);
     clickLoginButton();
@@ -59,6 +64,11 @@ public class LoginPage {
     webDriver.findElement(passwordRecoveryLinkLocator).click();
   }
 
-
+  @Step("Проверка, что пользователь вышел из системы")
+  public boolean isUserExited() {
+    new WebDriverWait(webDriver, Duration.ofSeconds(3))
+      .until(ExpectedConditions.visibilityOfElementLocated(loginButtonLocator));
+    return webDriver.findElement(loginButtonLocator).isDisplayed();
+  }
 
 }
